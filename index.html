@@ -2,128 +2,191 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Agenda Pro</title>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Visitas</title>
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <!-- Supabase Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --fc-button-bg-color: #4f46e5; --fc-button-hover-bg-color: #4338ca; }
-        body { font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-        #modalNuevaCita.hidden { display: none; }
-        #modalNuevaCita.flex { display: flex; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        #calendar { max-width: 1100px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        /* Estilos del Modal */
+        #modalCita {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-content h2 { margin-top: 0; color: #333; }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #45a049; }
+        .btn-cancelar { background-color: #f44336; }
+        .btn-cancelar:hover { background-color: #da190b; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body>
 
-    <div class="p-4 pb-24">
-        <header class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900">📅 Mi Agenda</h1>
-                <p class="text-xs text-indigo-600 font-medium">Toca un día para agendar</p>
-            </div>
-            <button onclick="abrirModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold shadow-md text-sm">+ Nueva</button>
-        </header>
-        <div id="calendar" class="shadow-lg border border-gray-100 rounded-2xl overflow-hidden bg-white"></div>
-    </div>
+    <div id="calendar"></div>
 
-    <!-- FORMULARIO MODAL -->
-    <div id="modalNuevaCita" class="hidden fixed inset-0 bg-black/60 z-[100] items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-gray-900">Programar Visita</h2>
-                <button onclick="cerrarModal()" class="text-gray-400 text-2xl">&times;</button>
-            </div>
-
-            <div class="space-y-3">
-                <input type="text" id="citaTitulo" placeholder="Asunto de la visita" class="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="citaFecha" class="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none">
-                    <input type="time" id="citaHora" class="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none">
-                </div>
-                <select id="citaDuracion" class="w-full px-4 py-2 border border-gray-200 rounded-xl bg-white outline-none">
-                    <option value="30">30 minutos</option>
-                    <option value="60" selected>1 hora</option>
-                    <option value="120">2 horas</option>
-                </select>
-                <input type="email" id="citaEmail" placeholder="Email del cliente" class="w-full px-4 py-2 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
-            </div>
-
-            <div class="mt-6 flex gap-3">
-                <button onclick="cerrarModal()" class="flex-1 py-2 text-gray-500 font-semibold">Cancelar</button>
-                <button onclick="guardarCita()" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl font-bold shadow-lg">Guardar</button>
-            </div>
+    <!-- Modal para añadir cita -->
+    <div id="modalCita">
+        <div class="modal-content">
+            <h2>Nueva Cita</h2>
+            <input type="text" id="citaTitulo" placeholder="Título de la visita (Ej: Juan Pérez)">
+            <input type="email" id="citaEmail" placeholder="Email del cliente">
+            <label>Fecha:</label>
+            <input type="date" id="citaFecha">
+            <label>Hora:</label>
+            <input type="time" id="citaHora">
+            <label>Duración:</label>
+            <select id="citaDuracion">
+                <option value="30">30 minutos</option>
+                <option value="60" selected>1 hora</option>
+                <option value="90">1.5 horas</option>
+                <option value="120">2 horas</option>
+            </select>
+            <button onclick="guardarCita()">Guardar Cita</button>
+            <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
         </div>
     </div>
 
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
     <script>
-        const SUPABASE_URL = 'https://szxkpojcodemgomwwowt.supabase.co'; 
+        // 1. CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://szxkpojcodemgomwwowt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6eGtwb2pjb2RlbWdvZ213b3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1Njc5MzksImV4cCI6MjA5MzE0MzkzOX0.9THtJxDemqWGlv4iVvDVJLTZptjpHaaC1vXr4-i-w80';
-        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Configuración especial para evitar "Failed to fetch"
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        });
+
         let calendar;
 
+        // 2. INICIALIZAR CALENDARIO
         document.addEventListener('DOMContentLoaded', function() {
-            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'es',
-                selectable: true,
-                headerToolbar: { left: 'prev,next', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                select: function(info) {
-                    abrirModal(info.startStr.split('T')[0], info.startStr.split('T')[1]?.substring(0,5) || "09:00");
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
+                // Cargar eventos desde Supabase
                 events: async function(info, successCallback, failureCallback) {
-                    const { data, error } = await _supabase.from('visitas').select('*');
-                    if (error) return failureCallback(error);
-                    successCallback(data.map(v => ({ id: v.id, title: v.titulo, start: v.fecha_inicio, end: v.fecha_fin })));
-                },
-                eventClick: async function(info) {
-                    if(confirm(`¿Borrar "${info.event.title}"?`)) {
-                        await _supabase.from('visitas').delete().eq('id', info.event.id);
-                        calendar.refetchEvents();
+                    try {
+                        const { data, error } = await _supabase
+                            .from('visitas')
+                            .select('*');
+
+                        if (error) throw error;
+
+                        const events = data.map(v => ({
+                            title: v.titulo,
+                            start: v.fecha_inicio,
+                            end: v.fecha_fin,
+                            extendedProps: { email: v.email_cliente }
+                        }));
+                        successCallback(events);
+                    } catch (err) {
+                        console.error("Error al cargar eventos:", err);
+                        failureCallback(err);
                     }
+                },
+                // Abrir modal al hacer clic en un día
+                dateClick: function(info) {
+                    abrirModal(info.dateStr);
                 }
             });
             calendar.render();
         });
 
-        function abrirModal(fecha = '', hora = '') {
-            document.getElementById('modalNuevaCita').classList.replace('hidden', 'flex');
-            if(fecha) document.getElementById('citaFecha').value = fecha;
-            if(hora) document.getElementById('citaHora').value = hora;
+        // 3. FUNCIONES DEL MODAL
+        function abrirModal(fecha) {
+            document.getElementById('citaFecha').value = fecha;
+            document.getElementById('modalCita').style.display = 'block';
         }
 
         function cerrarModal() {
-            document.getElementById('modalNuevaCita').classList.replace('flex', 'hidden');
+            document.getElementById('modalCita').style.display = 'none';
         }
 
+        // 4. GUARDAR CITA EN SUPABASE
         async function guardarCita() {
             const titulo = document.getElementById('citaTitulo').value;
+            const email = document.getElementById('citaEmail').value;
             const fecha = document.getElementById('citaFecha').value;
             const hora = document.getElementById('citaHora').value;
             const duracion = parseInt(document.getElementById('citaDuracion').value);
-            const email = document.getElementById('citaEmail').value;
-            
-            if (!titulo || !fecha || !hora || !email) return alert("Rellena todos los campos");
 
+            if (!titulo || !email || !fecha || !hora) {
+                alert("Por favor, completa todos los campos.");
+                return;
+            }
+
+            // Calcular fechas de inicio y fin
             const inicio = new Date(`${fecha}T${hora}`);
             const fin = new Date(inicio.getTime() + duracion * 60000);
 
-            // Ajustado a tu tabla: incluimos valores por defecto para los booleanos obligatorios
-            const { error } = await _supabase.from('visitas').insert([{ 
-                titulo: titulo, 
-                fecha_inicio: inicio.toISOString(), 
-                fecha_fin: fin.toISOString(),
-                email_cliente: email,
-                notificado_dia_antes: false,
-                notificado_mismo_dia: false
-            }]);
-            
-            if (error) {
-                alert("Error: " + error.message);
-                console.error(error);
-            } else {
+            try {
+                const { data, error } = await _supabase
+                    .from('visitas')
+                    .insert([{
+                        titulo: titulo,
+                        email_cliente: email,
+                        fecha_inicio: inicio.toISOString(),
+                        fecha_fin: fin.toISOString(),
+                        notificado_dia_antes: false,
+                        notificado_mismo_dia: false
+                    }]);
+
+                if (error) throw error;
+
+                alert("Cita guardada correctamente.");
                 cerrarModal();
-                calendar.refetchEvents();
+                calendar.refetchEvents(); // Recargar el calendario
+
+                // Limpiar formulario
+                document.getElementById('citaTitulo').value = "";
+                document.getElementById('citaEmail').value = "";
+            } catch (err) {
+                console.error("Error detallado:", err);
+                alert("Error al conectar con la base de datos. Asegúrate de haber configurado las Políticas (RLS) en el panel de Supabase.");
+            }
+        }
+
+        // Cerrar modal si se hace clic fuera
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('modalCita')) {
+                cerrarModal();
             }
         }
     </script>
