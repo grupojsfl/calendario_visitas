@@ -3,230 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Visitas Profesionales</title>
-    
-    <!-- FullCalendar CSS con tema moderno -->
+    <title>Agenda Profesional JSFL</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-    
-    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <style>
-        /* ESTILOS GLOBALES */
-        :root {
-            --primary-color: #007bff; /* Color principal azul */
-            --bg-color: #f8f9fa; /* Fondo gris muy suave */
-            --text-color: #212529; /* Texto casi negro */
-            --calendar-bg: #ffffff; /* Fondo del calendario blanco */
-        }
-
-        body { 
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            margin: 0;
-            padding: 10px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
-
-        #calendar { 
-            max-width: 1100px;
-            margin: 10px auto;
-            background: var(--calendar-bg);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            box-sizing: border-box; /* Importante para padding en móviles */
-        }
-
-        h2.title { 
-            text-align: center; 
-            color: #1c1e21;
-            margin-top: 10px;
-            margin-bottom: 20px;
-        }
-
-        /* PERSONALIZACIÓN MODERNA DE FULLCALENDAR */
-        .fc-toolbar-title {
-            font-weight: 700 !important;
-            font-size: 1.6rem !important; /* Título un poco más pequeño en general */
-        }
-
-        .fc-button-primary {
-            background-color: var(--primary-color) !important;
-            border-color: var(--primary-color) !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
-        }
+        :root { --primary: #007bff; --danger: #dc3545; --success: #28a745; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 10px; background-color: #f4f7f6; }
         
-        .fc-button-primary:hover {
-            background-color: #0056b3 !important;
-        }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; shadow: 0 4px 20px rgba(0,0,0,0.08); }
         
-        .fc-col-header-cell {
-            background-color: #e9ecef;
-            color: #495057;
-            padding: 8px 0;
-            font-weight: 600;
-        }
+        /* Ajuste de altura para que no quede espacio vacío */
+        #calendar { margin-bottom: 25px; min-height: 650px; }
 
-        /* RESPONSIVIDAD (SOLUCIONES PARA MÓVILES) */
-        @media (max-width: 768px) {
-            body { padding: 5px; } /* Menos margen en el móvil */
-            
-            #calendar { 
-                padding: 10px; /* Reducir padding interno */
-                margin: 5px auto;
-                border-radius: 8px; /* Bordes menos redondeados */
-            }
-
-            h2.title { font-size: 1.4rem; margin-bottom: 10px; }
-
-            /* Ajuste del Título del Mes */
-            .fc-toolbar-title {
-                font-size: 1.2rem !important; /* Título mucho más pequeño en móvil */
-                display: block; /* Forzar bloque */
-                text-align: center;
-                margin: 5px 0;
-            }
-            
-            /* Reorganización de la barra de herramientas (Toolbar) */
-            .fc-header-toolbar {
-                display: flex !important;
-                flex-direction: column !important; /* Botones arriba y abajo del título */
-                gap: 8px; /* Espacio entre filas */
-            }
-            
-            /* Colocación de los botones */
-            .fc-toolbar-chunk:first-child { order: 1; text-align: center; } /* Prev/Next arriba */
-            .fc-toolbar-chunk:nth-child(2) { order: 2; margin: 0 auto; width: 100%; text-align: center; } /* Título al centro */
-            .fc-toolbar-chunk:last-child { order: 3; text-align: center; } /* Mes/Semana/Día abajo */
-
-            .fc-button-group { width: 100%; display: flex; justify-content: center; }
-            .fc-button { flex: 1; } /* Botones de vista ocupan todo el ancho */
-            
-            /* Ajustar tamaño de fuente en la cuadrícula para móviles */
-            .fc-dayGridMonth-view .fc-col-header-cell-cushion { font-size: 0.8rem; }
-            .fc-daygrid-day-number { font-size: 0.9rem; }
+        /* Lista de visitas inferior */
+        .agenda-list { 
+            margin-top: 30px; 
+            border-top: 3px solid var(--primary); 
+            padding-top: 20px;
+            background: #fff;
         }
-
-        /* ESTILOS DEL MODAL (Mejorados) */
-        #modalCita { 
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(0,0,0,0.6); 
-            backdrop-filter: blur(4px); 
-        }
-        
-        .modal-content { 
-            background: #fff; 
-            margin: 15vh auto; /* 15% del alto de la vista */
-            padding: 30px; 
-            width: 350px; 
-            max-width: 90%; /* Ajuste para móviles */
-            border-radius: 15px; 
-            text-align: center; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25); 
-            box-sizing: border-box;
-        }
-        
-        h3 { margin-top: 0; color: #333; margin-bottom: 20px; font-weight: 600; }
-        
-        label { 
-            display: block; 
-            text-align: left; 
-            margin: 15px 0 3px 10px; 
-            font-size: 0.9em; 
-            color: #666; 
-            font-weight: 500;
-        }
-        
-        input, select { 
-            width: 100%; 
+        .list-header { color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .agenda-item { 
+            display: flex; 
+            flex-direction: column;
             padding: 12px; 
-            margin-bottom: 5px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 1em;
-        }
-        
-        input:focus, select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-        }
-
-        .btn-guardar { 
-            background-color: var(--primary-color); 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            padding: 15px; 
-            width: 100%; 
-            border-radius: 8px; 
-            font-weight: 600; 
-            font-size: 1.1em; 
-            margin-top: 25px;
-            transition: background-color 0.2s;
-        }
-        
-        .btn-guardar:hover { background-color: #0069d9; }
-        
-        .btn-cancelar { 
-            background-color: transparent; 
-            color: #721c24; 
-            border: none; 
-            cursor: pointer; 
-            margin-top: 10px; 
-            padding: 10px; 
-            width: 100%; 
+            border-bottom: 1px solid #eee; 
             font-size: 0.95em; 
-            text-decoration: underline; 
+        }
+        .agenda-item:last-child { border-bottom: none; }
+        .agenda-date { font-weight: bold; color: var(--primary); margin-bottom: 3px; }
+        .agenda-info { color: #444; }
+
+        /* Estilos del Modal */
+        #modalCita { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
+        .modal-content { background: #fff; margin: 5vh auto; padding: 25px; width: 350px; max-width: 90%; border-radius: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-delete { background: var(--danger); color: white; display: none; }
+        .btn-cancel { background: #6c757d; color: white; width: 100%; margin-top: 10px; }
+
+        /* Ajustes móvil */
+        @media (max-width: 768px) {
+            .fc-toolbar-title { font-size: 1.2rem !important; }
+            .fc-header-toolbar { flex-direction: column; gap: 8px; }
+            #calendar { min-height: 550px; }
         }
     </style>
 </head>
 <body>
 
-    <h2 class="title">Agenda de Visitas Profesionales</h2>
-    <div id="calendar"></div>
+    <div class="container">
+        <h2 style="text-align:center; color: #333; margin-top: 0;">Agenda de Visitas</h2>
+        <div id="calendar"></div>
+        
+        <div class="agenda-list">
+            <h3 class="list-header">📅 Visitas programadas (Este Mes)</h3>
+            <div id="listaEventos">Cargando lista de visitas...</div>
+        </div>
+    </div>
 
-    <!-- Modal para Nueva Cita -->
+    <!-- Modal Gestión Citas -->
     <div id="modalCita">
         <div class="modal-content">
-            <h3>Nueva Cita</h3>
+            <h3 id="modalTitle" style="margin-top:0;">Nueva Cita</h3>
+            <input type="hidden" id="citaId">
             <input type="text" id="citaTitulo" placeholder="Título de la visita">
             <input type="email" id="citaEmail" placeholder="Email del cliente">
-            
-            <label>Fecha:</label>
             <input type="date" id="citaFecha">
-            
-            <label>Hora de inicio:</label>
             <input type="time" id="citaHora">
-            
-            <label>Duración:</label>
             <select id="citaDuracion">
-                <option value="30">30 minutos</option>
+                <option value="30">30 min</option>
                 <option value="60" selected>1 hora</option>
                 <option value="90">1.5 horas</option>
                 <option value="120">2 horas</option>
             </select>
+            <input type="password" id="adminPass" placeholder="Clave: Reino2014">
             
-            <button class="btn-guardar" onclick="guardarCita()">Guardar Cita</button>
-            <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+            <div class="btn-group">
+                <button class="btn btn-save" onclick="procesarCita()">Guardar</button>
+                <button id="btnEliminar" class="btn btn-delete" onclick="eliminarCita()">Eliminar</button>
+            </div>
+            <button class="btn btn-cancel" onclick="cerrarModal()">Cerrar</button>
         </div>
     </div>
 
-    <!-- FullCalendar JS -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
     <script>
-        // CONFIGURACIÓN DE TU PROYECTO (Verificada con ID: szxkpojcodemgogmwowt)
         const SUPABASE_URL = 'https://szxkpojcodemgogmwowt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_yOolcYXWErzH6nqo3ixT3Q_UJ_eBtrw';
+        const CLAVE_ADMIN = 'Reino2014'; // Tu clave configurada
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let calendar;
@@ -235,98 +103,139 @@
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                locale: 'es', // Español de España
-                firstDay: 1,  // Semana empieza en Lunes
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                buttonText: {
-                    today: 'Hoy',
-                    month: 'Mes',
-                    week: 'Semana',
-                    day: 'Día'
+                locale: 'es',
+                firstDay: 1,
+                height: 'auto',
+                contentHeight: 600,
+                headerToolbar: { 
+                    left: 'prev,next today', 
+                    center: 'title', 
+                    right: 'dayGridMonth,timeGridWeek' 
                 },
                 selectable: true,
-                dateClick: function(info) {
-                    abrirModal(info.dateStr);
-                },
-                // Cargar eventos desde Supabase
+                dateClick: (info) => abrirModal(info.dateStr),
+                eventClick: (info) => cargarCitaParaEditar(info.event),
                 events: async function(info, successCallback, failureCallback) {
                     try {
-                        const { data, error } = await _supabase
-                            .from('visitas')
-                            .select('*');
-
+                        const { data, error } = await _supabase.from('visitas').select('*');
                         if (error) throw error;
-
-                        const events = data.map(event => ({
-                            title: event.titulo,
-                            start: event.fecha_inicio,
-                            end: event.fecha_fin,
-                            color: '#007bff'
-                        }));
-                        successCallback(events);
-                    } catch (error) {
-                        console.error("Error cargando eventos:", error);
-                        failureCallback(error);
-                    }
+                        
+                        actualizarListaInferior(data);
+                        
+                        successCallback(data.map(e => ({
+                            id: e.id, 
+                            title: e.titulo, 
+                            start: e.fecha_inicio, 
+                            end: e.fecha_fin, 
+                            extendedProps: { email: e.email_cliente }
+                        })));
+                    } catch (e) { failureCallback(e); }
                 }
             });
             calendar.render();
         });
 
-        function abrirModal(fecha) {
+        function actualizarListaInferior(eventos) {
+            const container = document.getElementById('listaEventos');
+            if (!eventos || eventos.length === 0) { 
+                container.innerHTML = "<p style='color: #666;'>No hay visitas registradas.</p>"; 
+                return; 
+            }
+            
+            // Ordenar por fecha más próxima
+            eventos.sort((a,b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
+            
+            container.innerHTML = eventos.map(e => {
+                const f = new Date(e.fecha_inicio);
+                const fechaLegible = f.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                const horaLegible = f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                return `<div class="agenda-item">
+                    <span class="agenda-date">${fechaLegible} a las ${horaLegible}h</span>
+                    <span class="agenda-info"><strong>${e.titulo}</strong> - Cliente: ${e.email_cliente}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function abrirModal(fecha, id = null) {
+            document.getElementById('citaId').value = id || '';
             document.getElementById('citaFecha').value = fecha;
+            document.getElementById('btnEliminar').style.display = id ? 'block' : 'none';
+            document.getElementById('modalTitle').innerText = id ? 'Modificar Cita' : 'Añadir Cita';
             document.getElementById('modalCita').style.display = 'block';
         }
 
-        function cerrarModal() {
-            document.getElementById('modalCita').style.display = 'none';
-            document.getElementById('citaTitulo').value = '';
-            document.getElementById('citaEmail').value = '';
+        function cargarCitaParaEditar(evento) {
+            const fechaIso = evento.startStr.split('T')[0];
+            const horaIso = evento.startStr.split('T')[1].substring(0,5);
+            
+            abrirModal(fechaIso, evento.id);
+            document.getElementById('citaTitulo').value = evento.title;
+            document.getElementById('citaEmail').value = evento.extendedProps.email;
+            document.getElementById('citaHora').value = horaIso;
         }
 
-        async function guardarCita() {
+        async function procesarCita() {
+            if (document.getElementById('adminPass').value !== CLAVE_ADMIN) {
+                alert("Clave incorrecta. Solo el administrador puede realizar cambios."); 
+                return;
+            }
+
+            const id = document.getElementById('citaId').value;
             const titulo = document.getElementById('citaTitulo').value;
             const email = document.getElementById('citaEmail').value;
             const fecha = document.getElementById('citaFecha').value;
             const hora = document.getElementById('citaHora').value;
             const duracion = parseInt(document.getElementById('citaDuracion').value);
 
-            if (!titulo || !email || !fecha || !hora) {
-                alert("Por favor, rellena todos los campos.");
-                return;
+            if(!titulo || !email || !fecha || !hora) {
+                alert("Completa todos los campos básicos."); return;
             }
 
             const inicio = new Date(`${fecha}T${hora}`);
             const fin = new Date(inicio.getTime() + duracion * 60000);
 
-            try {
-                const { data, error } = await _supabase
-                    .from('visitas')
-                    .insert([
-                        {
-                            titulo: titulo,
-                            email_cliente: email,
-                            fecha_inicio: inicio.toISOString(),
-                            fecha_fin: fin.toISOString(),
-                            notificado_dia_antes: false,
-                            notificado_mismo_dia: false
-                        }
-                    ]);
+            const datos = {
+                titulo, email_cliente: email,
+                fecha_inicio: inicio.toISOString(),
+                fecha_fin: fin.toISOString(),
+                notificado_dia_antes: false, 
+                notificado_mismo_dia: false,
+                email_interno_1: 'jesus.maite@gmail.com',
+                email_interno_2: 'gruposjsfl@gmail.com',
+                email_interno_3: 'gazu1981@gmail.com'
+            };
 
-                if (error) {
-                    alert("Error al guardar: " + error.message);
-                } else {
-                    alert("¡Cita guardada correctamente!");
-                    cerrarModal();
-                    calendar.refetchEvents(); // Recargar calendario
-                }
-            } catch (err) {
-                alert("Error de conexión: " + err.message);
+            let res;
+            if (id) {
+                res = await _supabase.from('visitas').update(datos).eq('id', id);
+            } else {
+                res = await _supabase.from('visitas').insert([datos]);
             }
+
+            if (res.error) alert("Error: " + res.error.message);
+            else { alert("¡Guardado correctamente!"); cerrarModal(); calendar.refetchEvents(); }
+        }
+
+        async function eliminarCita() {
+            if (document.getElementById('adminPass').value !== CLAVE_ADMIN) {
+                alert("Clave incorrecta."); return;
+            }
+            if (!confirm("¿Seguro que deseas eliminar esta visita?")) return;
+
+            const id = document.getElementById('citaId').value;
+            const { error } = await _supabase.from('visitas').delete().eq('id', id);
+            
+            if (error) alert("Error: " + error.message);
+            else { alert("Visita eliminada."); cerrarModal(); calendar.refetchEvents(); }
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalCita').style.display = 'none';
+            document.getElementById('citaId').value = '';
+            document.getElementById('citaTitulo').value = '';
+            document.getElementById('citaEmail').value = '';
+            document.getElementById('adminPass').value = '';
         }
     </script>
 </body>
