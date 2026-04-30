@@ -7,53 +7,82 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --danger: #e74c3c; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background-color: #f0f2f5; }
+        :root { --primary-blue: #007bff; --dark-grey: #6c757d; --danger-red: #dc3545; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; background-color: #f8f9fa; }
+        
         .container { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* Encabezado estilo original */
+        h2 { text-align: center; color: #333; font-weight: 600; margin-bottom: 20px; }
+        
+        /* Botones del calendario en AZUL */
+        .fc .fc-button-primary { background-color: var(--primary-blue) !important; border-color: var(--primary-blue) !important; text-transform: capitalize; }
+        .fc .fc-button-primary:hover { background-color: #0056b3 !important; }
+        
         #calendar { margin-bottom: 25px; min-height: 600px; }
-        .agenda-list { margin-top: 30px; border-top: 3px solid var(--accent); padding-top: 20px; }
-        .list-header { color: var(--primary); margin-bottom: 15px; font-size: 1.3em; }
-        .agenda-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; }
-        .agenda-date { font-weight: bold; color: var(--accent); font-size: 0.9em; }
-        .agenda-name { font-size: 1.1em; color: #333; margin-top: 2px; }
-        #modalCita { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
-        .modal-content { background: #fff; margin: 8vh auto; padding: 25px; width: 350px; max-width: 90%; border-radius: 15px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-save { background: var(--accent); color: white; }
-        .btn-delete { background: var(--danger); color: white; display: none; }
-        .btn-cancel { background: #95a5a6; color: white; width: 100%; margin-top: 10px; }
-        @media (max-width: 768px) { .fc-toolbar-title { font-size: 1.1rem !important; } .fc-header-toolbar { flex-direction: column; gap: 10px; } }
+
+        /* Lista de visitas inferior */
+        .agenda-list { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .list-header { color: #333; margin-bottom: 15px; font-size: 1.2em; border-left: 5px solid var(--primary-blue); padding-left: 10px; }
+        .agenda-item { padding: 12px; border-bottom: 1px solid #f1f1f1; display: flex; flex-direction: column; }
+        .agenda-date { font-weight: bold; color: var(--primary-blue); font-size: 0.9em; }
+        .agenda-name { font-size: 1.1em; color: #444; margin-top: 2px; }
+
+        /* Ventana Emergente (Modal) */
+        #modalCita { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
+        .modal-content { background: #fff; margin: 5vh auto; padding: 25px; width: 350px; max-width: 90%; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-top: 0; font-size: 1.4em; }
+        
+        label { display: block; margin-top: 10px; font-size: 0.85em; color: #666; }
+        input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        /* Botones del Modal coincidiendo con captura */
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .btn-save { background: var(--primary-blue); color: white; }
+        .btn-delete { background: var(--danger-red); color: white; margin-bottom: 5px; display: none; }
+        .btn-cancel { background: var(--dark-grey); color: white; }
+
+        @media (max-width: 768px) {
+            .fc-toolbar-title { font-size: 1.1rem !important; }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2 style="text-align:center; color: var(--primary); margin-top: 0;">Agenda de Pastoreo <br><small>Grupo 1</small></h2>
+        <h2>Agenda de Visitas de Pastoreo<br><span style="font-size: 0.7em; color: var(--primary-blue);">Grupo 1</span></h2>
         <div id="calendar"></div>
+        
         <div class="agenda-list">
-            <h3 class="list-header">📋 Visitas Programadas para el Mes</h3>
-            <div id="listaEventos">Cargando lista...</div>
+            <h3 class="list-header">Visitas Programadas (Este Mes)</h3>
+            <div id="listaEventos">Cargando lista de visitas...</div>
         </div>
     </div>
 
+    <!-- Formulario -->
     <div id="modalCita">
         <div class="modal-content">
-            <h3 id="modalTitle" style="margin-top:0; color: var(--primary);">Programar Visita</h3>
+            <h3 id="modalTitle">Nueva Visita</h3>
             <input type="hidden" id="citaId">
-            <label style="font-size: 0.8em; color: #666;">Nombre del hermano/familia:</label>
+            
+            <label>Familia / Hermano a visitar:</label>
             <input type="text" id="citaTitulo" placeholder="Ej: Familia Peñaloza">
-            <label style="font-size: 0.8em; color: #666;">Día de la visita:</label>
+            
+            <label>Día previsto:</label>
             <input type="date" id="citaFecha">
-            <label style="font-size: 0.8em; color: #666;">Hora:</label>
+            
+            <label>Hora:</label>
             <input type="time" id="citaHora">
-            <input type="password" id="adminPass" placeholder="Introducir Contraseña">
+            
+            <label>Clave de acceso:</label>
+            <input type="password" id="adminPass" placeholder="****">
+            
             <div class="btn-group">
+                <button id="btnEliminar" class="btn btn-delete" onclick="eliminarCita()">Eliminar Visita</button>
                 <button class="btn btn-save" onclick="procesarCita()">Guardar Visita</button>
-                <button id="btnEliminar" class="btn btn-delete" onclick="eliminarCita()">Eliminar</button>
+                <button class="btn btn-cancel" onclick="cerrarModal()">Cerrar</button>
             </div>
-            <button class="btn btn-cancel" onclick="cerrarModal()">Cerrar</button>
         </div>
     </div>
 
@@ -71,6 +100,7 @@
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'es',
+                buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' }, // Forzado a Español
                 firstDay: 1,
                 height: 'auto',
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
@@ -93,13 +123,13 @@
 
         function actualizarListaInferior(eventos) {
             const container = document.getElementById('listaEventos');
-            if (!eventos || eventos.length === 0) { container.innerHTML = "No hay visitas este mes."; return; }
+            if (!eventos || eventos.length === 0) { container.innerHTML = "No hay visitas para mostrar."; return; }
             eventos.sort((a,b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
             container.innerHTML = eventos.map(e => {
                 const f = new Date(e.fecha_inicio);
                 return `<div class="agenda-item">
-                    <span class="agenda-date">${f.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'})} a las ${f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}h</span>
-                    <span class="agenda-name">Visita a: <strong>${e.titulo}</strong></span>
+                    <span class="agenda-date">${f.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'})} - ${f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}h</span>
+                    <span class="agenda-name">Visita: <strong>${e.titulo}</strong></span>
                 </div>`;
             }).join('');
         }
@@ -108,7 +138,7 @@
             document.getElementById('citaId').value = id || '';
             document.getElementById('citaFecha').value = fecha;
             document.getElementById('btnEliminar').style.display = id ? 'block' : 'none';
-            document.getElementById('modalTitle').innerText = id ? 'Modificar Visita' : 'Nueva Visita';
+            document.getElementById('modalTitle').innerText = id ? 'Editar Visita' : 'Nueva Visita';
             document.getElementById('modalCita').style.display = 'block';
         }
 
@@ -127,12 +157,11 @@
             const fecha = document.getElementById('citaFecha').value;
             const hora = document.getElementById('citaHora').value;
 
-            if(!titulo || !fecha || !hora) { alert("Faltan datos"); return; }
+            if(!titulo || !fecha || !hora) { alert("Completa los datos de la familia."); return; }
 
             const inicio = new Date(`${fecha}T${hora}`);
             const fin = new Date(inicio.getTime() + 3600000); 
 
-            // Datos básicos para no entrar en conflicto con registros anteriores
             const datos = {
                 titulo: titulo,
                 fecha_inicio: inicio.toISOString(),
@@ -142,29 +171,17 @@
                 email_interno_3: 'gazu1981@gmail.com'
             };
 
-            let errorGuardado;
-            if (id) {
-                const { error } = await _supabase.from('visitas').update(datos).eq('id', id);
-                errorGuardado = error;
-            } else {
-                const { error } = await _supabase.from('visitas').insert([datos]);
-                errorGuardado = error;
-            }
+            let res = id ? await _supabase.from('visitas').update(datos).eq('id', id) : await _supabase.from('visitas').insert([datos]);
 
-            if (errorGuardado) {
-                console.error(errorGuardado);
-                alert("Error al conectar con la base de datos.");
-            } else {
-                cerrarModal();
-                calendar.refetchEvents();
-            }
+            if (res.error) alert("Error al conectar con la base de datos");
+            else { cerrarModal(); calendar.refetchEvents(); }
         }
 
         async function eliminarCita() {
             if (document.getElementById('adminPass').value !== CLAVE_ADMIN) {
                 alert("Contraseña incorrecta"); return;
             }
-            if (!confirm("¿Eliminar visita?")) return;
+            if (!confirm("¿Eliminar esta visita?")) return;
             const id = document.getElementById('citaId').value;
             await _supabase.from('visitas').delete().eq('id', id);
             cerrarModal();
