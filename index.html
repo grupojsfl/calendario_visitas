@@ -4,73 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Agenda Pro</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <style>
-        :root { 
-            --fc-border-color: #e2e8f0; 
-            --fc-button-bg-color: #4f46e5; 
-            --fc-button-hover-bg-color: #4338ca;
-            --fc-today-bg-color: #f0f9ff;
-            --fc-highlight-color: rgba(79, 70, 229, 0.1);
-        }
-        body { font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .fc { background: white; padding: 10px; border-radius: 12px; border: none !important; font-size: 14px; min-height: 500px; }
-        .fc-header-toolbar { margin-bottom: 1rem !important; flex-wrap: wrap; gap: 5px; }
-        .fc-button { padding: 8px 12px !important; font-weight: 600 !important; border-radius: 8px !important; }
-        .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 800; }
+        :root { --fc-button-bg-color: #4f46e5; --fc-button-hover-bg-color: #4338ca; }
+        body { font-family: sans-serif; }
         #modalNuevaCita.hidden { display: none; }
         #modalNuevaCita.flex { display: flex; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50">
 
-    <div class="p-3 md:p-10 pb-24">
+    <div class="p-4 pb-24">
         <header class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-2xl font-extrabold text-gray-950 tracking-tighter">📅 Mi Agenda</h1>
-                <p class="text-gray-500 text-xs text-indigo-600 font-medium">Toca un día para agendar</p>
-            </div>
-            <button onclick="abrirModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold shadow-md text-sm">+ Nueva</button>
+            <h1 class="text-xl font-bold">📅 Mi Agenda</h1>
+            <button onclick="abrirModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">+ Nueva</button>
         </header>
-        
-        <div id="calendar" class="shadow-lg border border-gray-100 rounded-2xl overflow-hidden bg-white"></div>
+        <div id="calendar" class="shadow-lg border rounded-2xl bg-white"></div>
     </div>
 
-    <!-- FORMULARIO MODAL -->
-    <div id="modalNuevaCita" class="hidden fixed inset-0 bg-black/60 z-[100] items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-xl p-6 transform transition-all">
-            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden"></div>
-            
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-900">Programar Visita</h2>
-                <button onclick="cerrarModal()" class="text-gray-400 text-2xl">&times;</button>
-            </div>
-
+    <!-- FORMULARIO -->
+    <div id="modalNuevaCita" class="hidden fixed inset-0 bg-black/60 z-[100] items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6">
+            <h2 class="text-lg font-bold mb-4">Programar Visita</h2>
             <div class="space-y-3">
-                <input type="text" id="citaTitulo" placeholder="Asunto de la visita" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="citaFecha" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                    <input type="time" id="citaHora" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-
-                <select id="citaDuracion" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                    <option value="30">Duración: 30 minutos</option>
-                    <option value="60" selected>Duración: 1 hora</option>
-                    <option value="90">Duración: 1.5 horas</option>
-                    <option value="120">Duración: 2 horas</option>
+                <input type="text" id="citaTitulo" placeholder="Asunto" class="w-full px-4 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="date" id="citaFecha" class="w-full px-4 py-2 border rounded-xl outline-none">
+                <input type="time" id="citaHora" class="w-full px-4 py-2 border rounded-xl outline-none">
+                <select id="citaDuracion" class="w-full px-4 py-2 border rounded-xl bg-white">
+                    <option value="30">30 minutos</option>
+                    <option value="60" selected>1 hora</option>
+                    <option value="120">2 horas</option>
                 </select>
-
-                <input type="email" id="citaEmail" placeholder="Email del cliente" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                <input type="email" id="citaEmail" placeholder="Email del cliente" class="w-full px-4 py-2 border rounded-xl outline-none">
             </div>
-
             <div class="mt-6 flex gap-3">
-                <button onclick="cerrarModal()" class="flex-1 py-3.5 text-gray-500 font-semibold">Cancelar</button>
-                <button onclick="guardarCita()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg">Confirmar</button>
+                <button onclick="cerrarModal()" class="flex-1 py-2 text-gray-500">Cancelar</button>
+                <button onclick="guardarCita()" class="flex-1 bg-indigo-600 text-white py-2 rounded-xl font-bold">Guardar</button>
             </div>
         </div>
     </div>
@@ -82,29 +53,21 @@
         let calendar;
 
         document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
+            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
                 initialView: 'dayGridMonth',
                 locale: 'es',
-                selectable: true, // PERMITE SELECCIONAR CLICANDO
+                selectable: true,
                 headerToolbar: { left: 'prev,next', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-                buttonText: { month: 'Mes', week: 'Semana' },
-                
-                // AL TOCAR UN DÍA O RANGO
-                select: function(info) {
-                    abrirModal(info.startStr.split('T')[0], info.startStr.split('T')[1]?.substring(0,5) || "09:00");
-                },
-
+                select: function(info) { abrirModal(info.startStr.split('T')[0], info.startStr.split('T')[1]?.substring(0,5) || "09:00"); },
                 events: async function(info, successCallback, failureCallback) {
                     const { data, error } = await _supabase.from('visitas').select('*');
                     if (error) return failureCallback(error);
                     successCallback(data.map(v => ({ id: v.id, title: v.titulo, start: v.fecha_inicio, end: v.fecha_fin })));
                 },
-
                 eventClick: async function(info) {
                     if(confirm(`¿Borrar "${info.event.title}"?`)) {
                         await _supabase.from('visitas').delete().eq('id', info.event.id);
-                        info.event.remove();
+                        calendar.refetchEvents();
                     }
                 }
             });
@@ -117,9 +80,7 @@
             if(hora) document.getElementById('citaHora').value = hora;
         }
 
-        function cerrarModal() {
-            document.getElementById('modalNuevaCita').classList.replace('flex', 'hidden');
-        }
+        function cerrarModal() { document.getElementById('modalNuevaCita').classList.replace('flex', 'hidden'); }
 
         async function guardarCita() {
             const titulo = document.getElementById('citaTitulo').value;
@@ -128,12 +89,12 @@
             const duracion = parseInt(document.getElementById('citaDuracion').value);
             const email = document.getElementById('citaEmail').value;
             
-            if (!titulo || !fecha || !hora || !email) return alert("Faltan datos");
+            if (!titulo || !fecha || !hora || !email) return alert("Por favor, rellena todos los campos");
 
-            // Calcular fecha fin según la duración seleccionada
             const inicio = new Date(`${fecha}T${hora}`);
             const fin = new Date(inicio.getTime() + duracion * 60000);
 
+            // IMPORTANTE: Los nombres de abajo deben coincidir con tu tabla de la foto
             const { error } = await _supabase.from('visitas').insert([{ 
                 titulo: titulo, 
                 fecha_inicio: inicio.toISOString(), 
@@ -141,8 +102,16 @@
                 email_cliente: email 
             }]);
             
-            if (error) alert("Error");
-            else { cerrarModal(); calendar.refetchEvents(); }
+            if (error) {
+                console.error(error);
+                alert("Error al guardar: " + error.message);
+            } else {
+                cerrarModal();
+                calendar.refetchEvents();
+                // Limpiar campos
+                document.getElementById('citaTitulo').value = "";
+                document.getElementById('citaEmail').value = "";
+            }
         }
     </script>
 </body>
