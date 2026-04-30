@@ -141,47 +141,49 @@
 
         // 4. GUARDAR CITA EN SUPABASE
         async function guardarCita() {
-            const titulo = document.getElementById('citaTitulo').value;
-            const email = document.getElementById('citaEmail').value;
-            const fecha = document.getElementById('citaFecha').value;
-            const hora = document.getElementById('citaHora').value;
-            const duracion = parseInt(document.getElementById('citaDuracion').value);
+    const titulo = document.getElementById('citaTitulo').value;
+    const email = document.getElementById('citaEmail').value;
+    const fecha = document.getElementById('citaFecha').value;
+    const hora = document.getElementById('citaHora').value;
+    const duracion = parseInt(document.getElementById('citaDuracion').value);
 
-            if (!titulo || !email || !fecha || !hora) {
-                alert("Por favor, completa todos los campos.");
-                return;
-            }
+    // Si falta algo, avisamos
+    if (!titulo || !email || !fecha || !hora) {
+        alert("Rellena todos los campos, por favor.");
+        return;
+    }
 
-            // Calcular fechas de inicio y fin
-            const inicio = new Date(`${fecha}T${hora}`);
-            const fin = new Date(inicio.getTime() + duracion * 60000);
+    const inicio = new Date(`${fecha}T${hora}`);
+    const fin = new Date(inicio.getTime() + duracion * 60000);
 
-            try {
-                const { data, error } = await _supabase
-                    .from('visitas')
-                    .insert([{
-                        titulo: titulo,
-                        email_cliente: email,
-                        fecha_inicio: inicio.toISOString(),
-                        fecha_fin: fin.toISOString(),
-                        notificado_dia_antes: false,
-                        notificado_mismo_dia: false
-                    }]);
+    try {
+        // Intentamos insertar solo lo básico para probar
+        const { data, error } = await _supabase
+            .from('visitas')
+            .insert([
+                {
+                    titulo: titulo,
+                    email_cliente: email,
+                    fecha_inicio: inicio.toISOString(),
+                    fecha_fin: fin.toISOString(),
+                    notificado_dia_antes: false,
+                    notificado_mismo_dia: false
+                }
+            ])
+            .select(); // El .select() ayuda a confirmar que se guardó
 
-                if (error) throw error;
-
-                alert("Cita guardada correctamente.");
-                cerrarModal();
-                calendar.refetchEvents(); // Recargar el calendario
-
-                // Limpiar formulario
-                document.getElementById('citaTitulo').value = "";
-                document.getElementById('citaEmail').value = "";
-            } catch (err) {
-                console.error("Error detallado:", err);
-                alert("Error al conectar con la base de datos. Asegúrate de haber configurado las Políticas (RLS) en el panel de Supabase.");
-            }
+        if (error) {
+            console.error("Error detallado de Supabase:", error);
+            alert("Error específico: " + error.message);
+        } else {
+            alert("¡Cita guardada con éxito!");
+            cerrarModal();
+            calendar.refetchEvents();
         }
+    } catch (err) {
+        alert("Error de conexión: " + err.message);
+    }
+}
 
         // Cerrar modal si se hace clic fuera
         window.onclick = function(event) {
