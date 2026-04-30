@@ -125,10 +125,17 @@
 
             const inicioIso = new Date(`${fecha}T${hora}`).toISOString();
 
+            // AHORA INCLUIMOS EL CAMPO email_cliente QUE FALTABA
             const datos = { 
                 titulo: titulo, 
                 fecha_inicio: inicioIso, 
-                fecha_fin: inicioIso 
+                fecha_fin: inicioIso,
+                email_cliente: 'pastoreo@grupo1.com', // Rellenamos el campo obligatorio
+                email_interno_1: 'jesus.maite@gmail.com',
+                email_interno_2: 'gruposjsfl@gmail.com',
+                email_interno_3: 'gazu1981@gmail.com',
+                notificado_dia_antes: false,
+                notificado_mismo_dia: false
             };
 
             let errorGuardado;
@@ -141,7 +148,7 @@
             }
 
             if (errorGuardado) {
-                alert("Error de conexión: " + errorGuardado.message);
+                alert("Error: " + errorGuardado.message);
             } else {
                 cerrarModal();
                 calendar.refetchEvents();
