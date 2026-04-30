@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Visitas Profesional</title>
+    
+    <!-- Librerías de diseño y calendario -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root { 
+            --fc-border-color: #e2e8f0; 
+            --fc-button-bg-color: #4f46e5; 
+            --fc-button-hover-bg-color: #4338ca;
+            --fc-today-bg-color: #f5f3ff;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .fc { background: white; padding: 25px; border-radius: 16px; border: none !important; }
+        .fc-header-toolbar { margin-bottom: 2rem !important; }
+        .fc-button { font-weight: 600 !important; text-transform: capitalize !important; border-radius: 8px !important; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-10">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Encabezado -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">📅 Agenda de Visitas</h1>
+                <p class="text-gray-500">Gestiona tus citas de forma elegante</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="nuevaCita()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
+                    + Añadir Nueva Visita
+                </button>
+            </div>
+        </header>
+        
+        <!-- Contenedor del Calendario -->
+        <div id="calendar" class="shadow-2xl border border-gray-200 rounded-2xl overflow-hidden"></div>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://szxkpojcodemgomwwowt.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6eGtwb2pjb2RlbWdvZ213b3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1Njc5MzksImV4cCI6MjA5MzE0MzkzOX0.9THtJxDemqWGlv4iVvDVJLTZptjpHaaC1vXr4-i-w80';
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana'
+                },
+                // Cargar eventos desde Supabase
+                events: async function(info, successCallback, failureCallback) {
+                    const { data, error } = await _supabase
+                        .from('visitas')
+                        .select('*');
+                    
+                    if (error) {
+                        console.error(error);
+                        failureCallback(error);
+                        return;
+                    }
+
+                    const events = data.map(v => ({
+                        id: v.id,
+                        title: v.titulo,
+                        start: v.fecha_inicio,
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#4f46e5',
+                        extendedProps: { 
+                            email: v.email_cliente,
+                            desc: v.descripcion 
+                        }
+                    }));
+                    successCallback(events);
+                },
+                // Borrar evento al hacer clic
+                eventClick: async function(info) {
+                    if(confirm(`¿Deseas eliminar la visita: "${info.event.title}"?`)) {
+                        const { error } = await _supabase
+                            .from('visitas')
+                            .delete()
+                            .eq('id', info.event.id);
+                        
+                        if (error) alert("Error al borrar");
+                        else info.event.remove();
+                    }
+                }
+            });
+            calendar.render();
+        });
+
+        // Función para insertar datos
+        async function nuevaCita() {
+            const titulo = prompt("Asunto de la visita:");
+            const fecha = prompt("Fecha y hora (Ejemplo: 2026-05-15 10:00):");
+            const email = prompt("Email del cliente (para avisos):");
+            
+            if (titulo && fecha && email) {
+                const { data, error } = await _supabase
+                    .from('visitas')
+                    .insert([{ 
+                        titulo: titulo, 
+                        fecha_inicio: fecha, 
+                        email_cliente: email 
+                    }]);
+                
+                if (error) {
+                    alert("Error al guardar: Asegúrate de que el formato de fecha sea YYYY-MM-DD HH:MM");
+                    console.log(error);
+                } else {
+                    location.reload(); // Recarga para ver la nueva cita
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
