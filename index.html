@@ -3,57 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda Pastoreo Grupo 1</title>
+    <title>Agenda Pastoreo Grupo 1 - Verde</title>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary-blue: #007bff; --dark-grey: #6c757d; --danger-red: #dc3545; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background-color: #f8f9fa; }
-        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        .fc .fc-button-primary { background-color: var(--primary-blue) !important; border-color: var(--primary-blue) !important; }
-        #calendar { margin-bottom: 25px; min-height: 600px; }
-        .agenda-list { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-        .list-header { color: #333; margin-bottom: 15px; border-left: 5px solid var(--primary-blue); padding-left: 10px; }
-        .agenda-item { padding: 12px; border-bottom: 1px solid #f1f1f1; display: flex; flex-direction: column; }
-        .agenda-date { font-weight: bold; color: var(--primary-blue); }
-        #modalCita { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-        .modal-content { background: #fff; margin: 5vh auto; padding: 25px; width: 350px; max-width: 90%; border-radius: 15px; }
-        label { display: block; margin-top: 10px; font-size: 0.85em; color: #666; }
+        /* CAMBIO A VERDE */
+        :root { 
+            --primary-green: #28a745; 
+            --dark-grey: #6c757d; 
+            --danger-red: #dc3545; 
+        }
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 10px; background-color: #f4f7f6; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        h2 { text-align: center; color: #2c3e50; font-weight: 600; }
+        
+        /* Botones del calendario en VERDE */
+        .fc .fc-button-primary { background-color: var(--primary-green) !important; border-color: var(--primary-green) !important; text-transform: capitalize; }
+        .fc .fc-button-primary:hover { background-color: #218838 !important; }
+        .fc .fc-button-primary:disabled { background-color: #94d3a2 !important; border-color: #94d3a2 !important; }
+
+        #calendar { margin-bottom: 25px; min-height: 600px; background: #fff; }
+
+        /* Lista inferior */
+        .agenda-list { margin-top: 30px; border-top: 3px solid var(--primary-green); padding-top: 20px; }
+        .list-header { color: #333; margin-bottom: 15px; font-size: 1.2em; }
+        .agenda-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; }
+        .agenda-date { font-weight: bold; color: var(--primary-green); font-size: 0.9em; }
+
+        /* Modal */
+        #modalCita { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: #fff; margin: 10vh auto; padding: 25px; width: 350px; max-width: 85%; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
+        label { display: block; margin-top: 10px; font-size: 0.85em; color: #555; font-weight: bold; }
         input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-save { background: var(--primary-blue); color: white; }
-        .btn-delete { background: var(--danger-red); color: white; margin-bottom: 5px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1em; }
+        .btn-save { background: var(--primary-green); color: white; }
+        .btn-delete { background: var(--danger-red); color: white; }
         .btn-cancel { background: var(--dark-grey); color: white; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Agenda de Visitas de Pastoreo<br><span style="font-size: 0.7em; color: var(--primary-blue);">Grupo 1</span></h2>
+        <h2>Agenda de Visitas<br><span style="color: var(--primary-green); font-size: 0.8em;">Modo Edición - Grupo 1</span></h2>
+        
         <div id="calendar"></div>
+        
         <div class="agenda-list">
-            <h3 class="list-header">Visitas Programadas (Este Mes)</h3>
+            <h3 class="list-header">Próximas Visitas</h3>
             <div id="listaEventos">Cargando...</div>
         </div>
     </div>
 
+    <!-- Modal -->
     <div id="modalCita">
         <div class="modal-content">
-            <h3 id="modalTitle">Nueva Visita</h3>
+            <h3 id="modalTitle" style="margin-top:0;">Nueva Visita</h3>
             <input type="hidden" id="citaId">
-            <label>Familia / Hermano a visitar:</label>
+            
+            <label>Nombre de la Familia:</label>
             <input type="text" id="citaTitulo" placeholder="Ej: Familia Flores">
-            <label>Día previsto:</label>
+            
+            <label>Fecha:</label>
             <input type="date" id="citaFecha">
+            
             <label>Hora:</label>
             <input type="time" id="citaHora">
-            <label>Clave:</label>
-            <input type="password" id="adminPass" placeholder="****">
+            
+            <label>Contraseña:</label>
+            <input type="password" id="adminPass" placeholder="Clave de acceso">
+            
             <div class="btn-group">
-                <button id="btnEliminar" class="btn btn-delete" style="display:none;" onclick="eliminarCita()">Eliminar Visita</button>
-                <button class="btn btn-save" onclick="procesarCita()">Guardar Visita</button>
+                <button class="btn btn-save" onclick="procesarCita()">Guardar Cambios</button>
+                <button id="btnEliminar" class="btn btn-delete" style="display:none;" onclick="eliminarCita()">Eliminar</button>
                 <button class="btn btn-cancel" onclick="cerrarModal()">Cerrar</button>
             </div>
         </div>
@@ -63,102 +89,104 @@
     <script>
         const SUPABASE_URL = 'https://szxkpojcodemgogmwowt.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_yOolcYXWErzH6nqo3ixT3Q_UJ_eBtrw';
-        const CLAVE_ADMIN = 'Reino2014'; 
+        const CLAVE_CORRECTA = 'Reino2014';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let calendar;
 
         document.addEventListener('DOMContentLoaded', function() {
-            calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'es',
                 buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
                 selectable: true,
                 dateClick: (info) => abrirModal(info.dateStr),
-                eventClick: (info) => cargarParaEditar(info.event),
+                eventClick: (info) => cargarEvento(info.event),
                 events: async function(info, successCallback, failureCallback) {
-                    try {
-                        const { data, error } = await _supabase.from('visitas').select('*');
-                        if (error) throw error;
-                        actualizarLista(data);
-                        successCallback(data.map(e => ({ id: e.id, title: e.titulo, start: e.fecha_inicio })));
-                    } catch (e) { failureCallback(e); }
+                    const { data, error } = await _supabase.from('visitas').select('*');
+                    if (error) failureCallback(error);
+                    else {
+                        pintarLista(data);
+                        successCallback(data.map(e => ({
+                            id: e.id, title: e.titulo, start: e.fecha_inicio
+                        })));
+                    }
                 }
             });
             calendar.render();
         });
 
-        function actualizarLista(eventos) {
-            const container = document.getElementById('listaEventos');
-            if (!eventos || eventos.length === 0) { container.innerHTML = "No hay visitas."; return; }
+        function pintarLista(eventos) {
+            const div = document.getElementById('listaEventos');
+            if(!eventos.length) { div.innerHTML = "No hay visitas programadas."; return; }
             eventos.sort((a,b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
-            container.innerHTML = eventos.map(e => {
-                const f = new Date(e.fecha_inicio);
-                return `<div class="agenda-item"><span class="agenda-date">${f.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'})} - ${f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}h</span><span>Visita: <strong>${e.titulo}</strong></span></div>`;
+            div.innerHTML = eventos.map(e => {
+                const d = new Date(e.fecha_inicio);
+                return `<div class="agenda-item">
+                    <span class="agenda-date">${d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'short'})} - ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                    <strong>${e.titulo}</strong>
+                </div>`;
             }).join('');
         }
 
         function abrirModal(fecha, id = null) {
             document.getElementById('citaId').value = id || '';
             document.getElementById('citaFecha').value = fecha;
-            document.getElementById('btnEliminar').style.display = id ? 'block' : 'none';
             document.getElementById('modalTitle').innerText = id ? 'Editar Visita' : 'Nueva Visita';
+            document.getElementById('btnEliminar').style.display = id ? 'block' : 'none';
             document.getElementById('modalCita').style.display = 'block';
         }
 
-        function cargarParaEditar(evento) {
-            abrirModal(evento.startStr.split('T')[0], evento.id);
-            document.getElementById('citaTitulo').value = evento.title;
-            document.getElementById('citaHora').value = evento.startStr.split('T')[1].substring(0,5);
+        function cargarEvento(ev) {
+            abrirModal(ev.startStr.split('T')[0], ev.id);
+            document.getElementById('citaTitulo').value = ev.title;
+            document.getElementById('citaHora').value = ev.startStr.split('T')[1].substring(0,5);
         }
 
         async function procesarCita() {
-            if (document.getElementById('adminPass').value !== CLAVE_ADMIN) { alert("Clave incorrecta"); return; }
-            
+            if (document.getElementById('adminPass').value !== CLAVE_CORRECTA) {
+                alert("Contraseña incorrecta"); return;
+            }
+
             const id = document.getElementById('citaId').value;
             const titulo = document.getElementById('citaTitulo').value;
-            const fecha = document.getElementById('citaFecha').value;
-            const hora = document.getElementById('citaHora').value;
+            const f = document.getElementById('citaFecha').value;
+            const h = document.getElementById('citaHora').value;
+            
+            if(!titulo || !f || !h) { alert("Rellena todos los campos"); return; }
 
-            if(!titulo || !fecha || !hora) { alert("Completa los datos"); return; }
-
-            const fechaIso = new Date(`${fecha}T${hora}`).toISOString();
-
-            // Enviamos el mínimo de datos posible para evitar errores de conexión
+            const isoFecha = new Date(`${f}T${h}`).toISOString();
             const datos = { 
                 titulo: titulo, 
-                fecha_inicio: fechaIso,
-                fecha_fin: fechaIso // Usamos la misma para simplificar
+                fecha_inicio: isoFecha, 
+                fecha_fin: isoFecha,
+                email_interno_1: 'jesus.maite@gmail.com' // Solo enviamos uno para probar estabilidad
             };
 
-            let resultado;
-            if (id) {
-                resultado = await _supabase.from('visitas').update(datos).eq('id', id);
+            let error;
+            if(id) {
+                const res = await _supabase.from('visitas').update(datos).eq('id', id);
+                error = res.error;
             } else {
-                resultado = await _supabase.from('visitas').insert([datos]);
+                const res = await _supabase.from('visitas').insert([datos]);
+                error = res.error;
             }
 
-            if (resultado.error) {
-                console.error(resultado.error);
-                alert("Error de conexión. Inténtalo de nuevo.");
-            } else {
-                cerrarModal();
-                calendar.refetchEvents();
-            }
+            if(error) alert("Error al guardar. Inténtalo de nuevo.");
+            else { cerrarModal(); calendar.refetchEvents(); }
         }
 
         async function eliminarCita() {
-            if (document.getElementById('adminPass').value !== CLAVE_ADMIN) { alert("Clave incorrecta"); return; }
-            if (confirm("¿Borrar visita?")) {
-                await _supabase.from('visitas').delete().eq('id', document.getElementById('citaId').value);
-                cerrarModal(); calendar.refetchEvents();
-            }
+            if (document.getElementById('adminPass').value !== CLAVE_CORRECTA) { alert("Clave errónea"); return; }
+            if (!confirm("¿Seguro que quieres borrarla?")) return;
+            await _supabase.from('visitas').delete().eq('id', document.getElementById('citaId').value);
+            cerrarModal(); calendar.refetchEvents();
         }
 
         function cerrarModal() {
             document.getElementById('modalCita').style.display = 'none';
-            document.getElementById('citaId').value = '';
             document.getElementById('citaTitulo').value = '';
             document.getElementById('adminPass').value = '';
         }
