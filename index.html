@@ -2,10 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Visitas Profesional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agenda Móvil</title>
     
-    <!-- Librerías de diseño y calendario -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,136 +14,182 @@
             --fc-border-color: #e2e8f0; 
             --fc-button-bg-color: #4f46e5; 
             --fc-button-hover-bg-color: #4338ca;
-            --fc-today-bg-color: #f5f3ff;
+            --fc-today-bg-color: #f0f9ff;
         }
-        body { font-family: 'Inter', sans-serif; }
-        .fc { background: white; padding: 25px; border-radius: 16px; border: none !important; }
-        .fc-header-toolbar { margin-bottom: 2rem !important; }
-        .fc-button { font-weight: 600 !important; text-transform: capitalize !important; border-radius: 8px !important; }
+        body { font-family: ui-sans-serif, system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Ajustes de FullCalendar para Móvil */
+        .fc { background: white; padding: 10px; border-radius: 12px; border: none !important; font-size: 14px; }
+        .fc-header-toolbar { margin-bottom: 1rem !important; flex-wrap: wrap; gap: 5px; justify-content: center !important; }
+        .fc-toolbar-chunk { display: flex; gap: 2px; }
+        
+        /* Botones del calendario más grandes para táctil */
+        .fc-button { padding: 8px 12px !important; font-weight: 600 !important; font-size: 13px !important; border-radius: 8px !important; }
+        
+        /* Título del mes más pequeño en móvil */
+        .fc-toolbar-title { font-size: 1.2rem !important; font-weight: 800; margin: 0 10px !important; }
+
+        /* Ocultar scrollbars feos */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        /* Estilos para el formulario flotante */
+        #modalNuevaCita { transition: opacity 0.3s ease, transform 0.3s ease; }
+        #modalNuevaCita.hidden { opacity: 0; transform: translateY(20px); pointer-events: none; display: flex !important;}
+        #modalNuevaCita.flex { opacity: 1; transform: translateY(0); pointer-events: auto; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-4 md:p-10">
+<body class="bg-gray-50 min-h-screen">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- Encabezado -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+    <div class="p-3 md:p-10 pb-24"> <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
             <div>
-                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">📅 Agenda de Visitas</h1>
-                <p class="text-gray-500">Gestiona tus citas de forma elegante</p>
+                <h1 class="text-3xl font-extrabold text-gray-950 tracking-tighter">📅 Mi Agenda</h1>
+                <p class="text-gray-600 text-sm">Tus visitas, siempre a mano.</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="nuevaCita()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
-                    + Añadir Nueva Visita
-                </button>
-            </div>
+            <button onclick="abrirModal()" class="hidden sm:block bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow hover:bg-indigo-700 transition">
+                + Nueva Visita
+            </button>
         </header>
         
-        <!-- Contenedor del Calendario -->
-        <div id="calendar" class="shadow-2xl border border-gray-200 rounded-2xl overflow-hidden"></div>
+        <div id="calendar" class="shadow-lg border border-gray-100 rounded-2xl overflow-hidden bg-white"></div>
+    </div>
+
+    <button onclick="abrirModal()" class="sm:hidden fixed bottom-6 right-6 z-50 bg-indigo-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center text-3xl font-bold hover:bg-indigo-700 active:scale-95 transition-all">
+        +
+    </button>
+
+    <div id="modalNuevaCita" class="hidden fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl shadow-xl p-6 md:p-8 transform transition-all duration-300">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Nueva Cita</h2>
+                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Asunto</label>
+                    <input type="text" id="citaTitulo" placeholder="Ej: Revisión Juan" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-lg">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                        <input type="date" id="citaFecha" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+                        <input type="time" id="citaHora" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-lg">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email del Cliente (para avisos)</label>
+                    <input type="email" id="citaEmail" placeholder="cliente@correo.com" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-lg">
+                </div>
+            </div>
+
+            <div class="mt-8 flex gap-3">
+                <button onclick="cerrarModal()" class="flex-1 bg-gray-100 text-gray-700 px-6 py-3.5 rounded-xl font-semibold hover:bg-gray-200 transition">Cancelar</button>
+                <button onclick="guardarCita()" class="flex-1 bg-indigo-600 text-white px-6 py-3.5 rounded-xl font-bold shadow hover:bg-indigo-700 active:scale-95 transition">Guardar Cita</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN DE SUPABASE
+        // CONFIGURACIÓN DE SUPABASE (Tus claves reales ya están aquí)
         const SUPABASE_URL = 'https://szxkpojcodemgomwwowt.supabase.co'; 
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6eGtwb2pjb2RlbWdvZ213b3d0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1Njc5MzksImV4cCI6MjA5MzE0MzkzOX0.9THtJxDemqWGlv4iVvDVJLTZptjpHaaC1vXr4-i-w80';
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let calendar;
 
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth', // En móvil muestra lista, en PC muestra mes
                 locale: 'es',
+                height: 'auto',
                 headerToolbar: {
-                    left: 'prev,next today',
+                    left: 'prev,next',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
+                    right: window.innerWidth < 768 ? 'listWeek,dayGridMonth' : 'dayGridMonth,timeGridWeek'
                 },
-                buttonText: {
-                    today: 'Hoy',
-                    month: 'Mes',
-                    week: 'Semana'
-                },
-                // Cargar eventos desde Supabase
+                buttonText: { month: 'Mes', week: 'Semana', list: 'Lista' },
+                
+                // Cargar eventos
                 events: async function(info, successCallback, failureCallback) {
-                    const { data, error } = await _supabase
-                        .from('visitas')
-                        .select('*');
-                    
-                    if (error) {
-                        console.error(error);
-                        failureCallback(error);
-                        return;
-                    }
-
-                    const events = data.map(v => ({
-                        id: v.id,
-                        title: v.titulo,
-                        start: v.fecha_inicio,
-                        backgroundColor: '#4f46e5',
-                        borderColor: '#4f46e5',
-                        extendedProps: { 
-                            email: v.email_cliente,
-                            desc: v.descripcion 
-                        }
-                    }));
-                    successCallback(events);
+                    const { data, error } = await _supabase.from('visitas').select('*');
+                    if (error) { failureCallback(error); return; }
+                    successCallback(data.map(v => ({ id: v.id, title: v.titulo, start: v.fecha_inicio })));
                 },
-                // Borrar evento al hacer clic
+
+                // Borrar evento (con un toque)
                 eventClick: async function(info) {
-                    if(confirm(`¿Deseas eliminar la visita: "${info.event.title}"?`)) {
-                        const { error } = await _supabase
-                            .from('visitas')
-                            .delete()
-                            .eq('id', info.event.id);
-                        
-                        if (error) alert("Error al borrar");
-                        else info.event.remove();
-                    }
+                    // Usamos un delay para que el efecto visual del toque se vea antes del prompt
+                    setTimeout(async () => {
+                        if(confirm(`¿Borrar visita: "${info.event.title}"?`)) {
+                            await _supabase.from('visitas').delete().eq('id', info.event.id);
+                            info.event.remove();
+                        }
+                    }, 100);
                 }
             });
             calendar.render();
+            
+            // Ajustar vista si giras el móvil
+            window.addEventListener('resize', () => {
+                if (window.innerWidth < 768) calendar.changeView('listWeek');
+                else calendar.changeView('dayGridMonth');
+            });
         });
 
-        // Función para insertar datos
-        async function nuevaCita() {
-            const titulo = prompt("Asunto de la visita:");
-            const fecha = prompt("Fecha y hora (Ejemplo: 2026-05-15 10:00):");
-            const email = prompt("Email del cliente (para avisos):");
+        // Funciones del Formulario Modal (Diseño Nativo Móvil)
+        const modal = document.getElementById('modalNuevaCita');
+
+        function abrirModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Poner fecha de hoy por defecto
+            document.getElementById('citaFecha').valueAsDate = new Date();
+        }
+
+        function cerrarModal() {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            // Limpiar formulario
+            document.getElementById('citaTitulo').value = '';
+            document.getElementById('citaEmail').value = '';
+        }
+
+        async function guardarCita() {
+            const titulo = document.getElementById('citaTitulo').value;
+            const fecha = document.getElementById('citaFecha').value;
+            const hora = document.getElementById('citaHora').value;
+            const email = document.getElementById('citaEmail').value;
             
-            if (titulo && fecha && email) {
-                const { data, error } = await _supabase
-                    .from('visitas')
-                    .insert([{ 
-                        titulo: titulo, 
-                        fecha_inicio: fecha, 
-                        email_cliente: email 
-                    }]);
-                
-                if (error) {
-                    alert("Error al guardar: Asegúrate de que el formato de fecha sea YYYY-MM-DD HH:MM");
-                    console.log(error);
-                } else {
-                    location.reload(); // Recarga para ver la nueva cita
-                }
+            if (!titulo || !fecha || !hora || !email) {
+                alert("Por favor, rellena todos los campos.");
+                return;
+            }
+
+            // Unir fecha y hora para Supabase
+            const fechaCompleta = `${fecha}T${hora}:00`;
+
+            const { error } = await _supabase.from('visitas').insert([{ 
+                titulo: titulo, 
+                fecha_inicio: fechaCompleta, 
+                email_cliente: email 
+            }]);
+            
+            if (error) {
+                alert("Error al guardar. Revisa la conexión.");
+                console.log(error);
+            } else {
+                cerrarModal();
+                calendar.refetchEvents(); // Recarga el calendario sin recargar la página
             }
         }
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
