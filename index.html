@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+<!-- Enlace al manifiesto -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Configuración para móviles -->
+<meta name="theme-color" content="#4CAF50">
+<link rel="apple-touch-icon" href="pastoreo.png">
+
+<script>
+  // Registro del Service Worker para que Chrome active la instalación
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js');
+    });
+  }
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda Pastoreo Grupo 1</title>
@@ -163,5 +179,19 @@
             document.getElementById('adminPass').value = '';
         }
     </script>
+<!-- Aquí termina el contenido visual de tu app -->
+
+    <script>
+        // Registro del Service Worker (el motor de la PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito', reg))
+                    .catch(err => console.log('Error al registrar el Service Worker', err));
+            });
+        }
+    </script>
+</body>
+</html>
 </body>
 </html>
