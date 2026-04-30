@@ -24,7 +24,7 @@
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-save { background: var(--primary-blue); color: white; }
-        .btn-delete { background: var(--danger-red); color: white; }
+        .btn-delete { background: var(--danger-red); color: white; margin-bottom: 5px; }
         .btn-cancel { background: var(--dark-grey); color: white; }
     </style>
 </head>
@@ -44,7 +44,7 @@
             <h3 id="modalTitle">Nueva Visita</h3>
             <input type="hidden" id="citaId">
             <label>Familia / Hermano a visitar:</label>
-            <input type="text" id="citaTitulo">
+            <input type="text" id="citaTitulo" placeholder="Ej: Familia Flores">
             <label>Día previsto:</label>
             <input type="date" id="citaFecha">
             <label>Hora:</label>
@@ -52,8 +52,8 @@
             <label>Clave:</label>
             <input type="password" id="adminPass" placeholder="****">
             <div class="btn-group">
-                <button class="btn btn-save" onclick="procesarCita()">Guardar Visita</button>
                 <button id="btnEliminar" class="btn btn-delete" style="display:none;" onclick="eliminarCita()">Eliminar Visita</button>
+                <button class="btn btn-save" onclick="procesarCita()">Guardar Visita</button>
                 <button class="btn btn-cancel" onclick="cerrarModal()">Cerrar</button>
             </div>
         </div>
@@ -78,12 +78,12 @@
                 dateClick: (info) => abrirModal(info.dateStr),
                 eventClick: (info) => cargarParaEditar(info.event),
                 events: async function(info, successCallback, failureCallback) {
-                    const { data, error } = await _supabase.from('visitas').select('*');
-                    if (error) failureCallback(error);
-                    else {
+                    try {
+                        const { data, error } = await _supabase.from('visitas').select('*');
+                        if (error) throw error;
                         actualizarLista(data);
                         successCallback(data.map(e => ({ id: e.id, title: e.titulo, start: e.fecha_inicio })));
-                    }
+                    } catch (e) { failureCallback(e); }
                 }
             });
             calendar.render();
@@ -91,6 +91,7 @@
 
         function actualizarLista(eventos) {
             const container = document.getElementById('listaEventos');
+            if (!eventos || eventos.length === 0) { container.innerHTML = "No hay visitas."; return; }
             eventos.sort((a,b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio));
             container.innerHTML = eventos.map(e => {
                 const f = new Date(e.fecha_inicio);
@@ -119,29 +120,32 @@
             const titulo = document.getElementById('citaTitulo').value;
             const fecha = document.getElementById('citaFecha').value;
             const hora = document.getElementById('citaHora').value;
-            const inicio = new Date(`${fecha}T${hora}`).toISOString();
 
+            if(!titulo || !fecha || !hora) { alert("Completa los datos"); return; }
+
+            const fechaIso = new Date(`${fecha}T${hora}`).toISOString();
+
+            // Enviamos el mínimo de datos posible para evitar errores de conexión
             const datos = { 
                 titulo: titulo, 
-                fecha_inicio: inicio, 
-                fecha_fin: new Date(new Date(`${fecha}T${hora}`).getTime() + 3600000).toISOString() 
+                fecha_inicio: fechaIso,
+                fecha_fin: fechaIso // Usamos la misma para simplificar
             };
 
-            let errorGuardado;
+            let resultado;
             if (id) {
-                const { error } = await _supabase.from('visitas').update(datos).eq('id', id);
-                errorGuardado = error;
+                resultado = await _supabase.from('visitas').update(datos).eq('id', id);
             } else {
-                // Solo al crear nuevo metemos los emails
-                datos.email_interno_1 = 'jesus.maite@gmail.com';
-                datos.email_interno_2 = 'gruposjsfl@gmail.com';
-                datos.email_interno_3 = 'gazu1981@gmail.com';
-                const { error } = await _supabase.from('visitas').insert([datos]);
-                errorGuardado = error;
+                resultado = await _supabase.from('visitas').insert([datos]);
             }
 
-            if (errorGuardado) alert("Error de conexión. Inténtalo de nuevo.");
-            else { cerrarModal(); calendar.refetchEvents(); }
+            if (resultado.error) {
+                console.error(resultado.error);
+                alert("Error de conexión. Inténtalo de nuevo.");
+            } else {
+                cerrarModal();
+                calendar.refetchEvents();
+            }
         }
 
         async function eliminarCita() {
@@ -154,6 +158,7 @@
 
         function cerrarModal() {
             document.getElementById('modalCita').style.display = 'none';
+            document.getElementById('citaId').value = '';
             document.getElementById('citaTitulo').value = '';
             document.getElementById('adminPass').value = '';
         }
