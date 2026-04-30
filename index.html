@@ -9,32 +9,22 @@
     <style>
         :root { --primary: #2c3e50; --accent: #27ae60; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; background-color: #f0f2f5; }
-        
         .container { max-width: 1100px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         #calendar { margin-bottom: 25px; min-height: 600px; }
-
-        /* Lista de visitas inferior */
         .agenda-list { margin-top: 30px; border-top: 3px solid var(--accent); padding-top: 20px; }
         .list-header { color: var(--primary); margin-bottom: 15px; font-size: 1.3em; }
         .agenda-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; }
         .agenda-date { font-weight: bold; color: var(--accent); font-size: 0.9em; }
         .agenda-name { font-size: 1.1em; color: #333; margin-top: 2px; }
-
-        /* Modal */
         #modalCita { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
         .modal-content { background: #fff; margin: 8vh auto; padding: 25px; width: 350px; max-width: 90%; border-radius: 15px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; }
         .btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-save { background: var(--accent); color: white; }
         .btn-delete { background: var(--danger); color: white; display: none; }
         .btn-cancel { background: #95a5a6; color: white; width: 100%; margin-top: 10px; }
-
-        @media (max-width: 768px) {
-            .fc-toolbar-title { font-size: 1.1rem !important; }
-            .fc-header-toolbar { flex-direction: column; gap: 10px; }
-        }
+        @media (max-width: 768px) { .fc-toolbar-title { font-size: 1.1rem !important; } .fc-header-toolbar { flex-direction: column; gap: 10px; } }
     </style>
 </head>
 <body>
@@ -42,30 +32,23 @@
     <div class="container">
         <h2 style="text-align:center; color: var(--primary); margin-top: 0;">Agenda de Pastoreo <br><small>Grupo 1</small></h2>
         <div id="calendar"></div>
-        
         <div class="agenda-list">
             <h3 class="list-header">📋 Visitas Programadas para el Mes</h3>
             <div id="listaEventos">Cargando lista...</div>
         </div>
     </div>
 
-    <!-- Modal -->
     <div id="modalCita">
         <div class="modal-content">
             <h3 id="modalTitle" style="margin-top:0; color: var(--primary);">Programar Visita</h3>
             <input type="hidden" id="citaId">
-            
             <label style="font-size: 0.8em; color: #666;">Nombre del hermano/familia:</label>
-            <input type="text" id="citaTitulo" placeholder="Ej: Familia García">
-            
+            <input type="text" id="citaTitulo" placeholder="Ej: Familia Peñaloza">
             <label style="font-size: 0.8em; color: #666;">Día de la visita:</label>
             <input type="date" id="citaFecha">
-            
             <label style="font-size: 0.8em; color: #666;">Hora:</label>
             <input type="time" id="citaHora">
-            
-            <input type="password" id="adminPass" placeholder="Contraseña">
-            
+            <input type="password" id="adminPass" placeholder="Introducir Contraseña">
             <div class="btn-group">
                 <button class="btn btn-save" onclick="procesarCita()">Guardar Visita</button>
                 <button id="btnEliminar" class="btn btn-delete" onclick="eliminarCita()">Eliminar</button>
@@ -115,7 +98,7 @@
             container.innerHTML = eventos.map(e => {
                 const f = new Date(e.fecha_inicio);
                 return `<div class="agenda-item">
-                    <span class="agenda-date">${f.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric'})} a las ${f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}h</span>
+                    <span class="agenda-date">${f.toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'})} a las ${f.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}h</span>
                     <span class="agenda-name">Visita a: <strong>${e.titulo}</strong></span>
                 </div>`;
             }).join('');
@@ -144,36 +127,48 @@
             const fecha = document.getElementById('citaFecha').value;
             const hora = document.getElementById('citaHora').value;
 
-            if(!titulo || !fecha || !hora) { alert("Por favor, pon el nombre y la hora"); return; }
+            if(!titulo || !fecha || !hora) { alert("Faltan datos"); return; }
 
             const inicio = new Date(`${fecha}T${hora}`);
-            const fin = new Date(inicio.getTime() + 3600000); // 1 hora por defecto
+            const fin = new Date(inicio.getTime() + 3600000); 
 
+            // Datos básicos para no entrar en conflicto con registros anteriores
             const datos = {
-                titulo, 
-                email_cliente: 'pastoreo.grupo1@iglesia.com', // Email genérico
+                titulo: titulo,
                 fecha_inicio: inicio.toISOString(),
                 fecha_fin: fin.toISOString(),
-                notificado_dia_antes: false, notificado_mismo_dia: false,
                 email_interno_1: 'jesus.maite@gmail.com',
                 email_interno_2: 'gruposjsfl@gmail.com',
                 email_interno_3: 'gazu1981@gmail.com'
             };
 
-            let res = id ? await _supabase.from('visitas').update(datos).eq('id', id) : await _supabase.from('visitas').insert([datos]);
+            let errorGuardado;
+            if (id) {
+                const { error } = await _supabase.from('visitas').update(datos).eq('id', id);
+                errorGuardado = error;
+            } else {
+                const { error } = await _supabase.from('visitas').insert([datos]);
+                errorGuardado = error;
+            }
 
-            if (res.error) alert("Error al guardar");
-            else { cerrarModal(); calendar.refetchEvents(); }
+            if (errorGuardado) {
+                console.error(errorGuardado);
+                alert("Error al conectar con la base de datos.");
+            } else {
+                cerrarModal();
+                calendar.refetchEvents();
+            }
         }
 
         async function eliminarCita() {
             if (document.getElementById('adminPass').value !== CLAVE_ADMIN) {
                 alert("Contraseña incorrecta"); return;
             }
-            if (!confirm("¿Eliminar esta visita de la agenda?")) return;
+            if (!confirm("¿Eliminar visita?")) return;
             const id = document.getElementById('citaId').value;
-            const { error } = await _supabase.from('visitas').delete().eq('id', id);
-            if (error) alert("Error"); else { cerrarModal(); calendar.refetchEvents(); }
+            await _supabase.from('visitas').delete().eq('id', id);
+            cerrarModal();
+            calendar.refetchEvents();
         }
 
         function cerrarModal() {
