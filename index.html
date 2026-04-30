@@ -31,7 +31,7 @@
 <body>
 
     <div class="container">
-        <h2>Agenda de Visitas de Pastoreo<br><span style="font-size: 0.7em; color: var(--primary-blue);">Grupo 1</span></h2>
+        <h2>Agenda de Visitas de Pastoreo<br><span style="font-size: 0.7em; color: var(--primary-blue);">Grupo 1 - Base de Datos Optimizada</span></h2>
         <div id="calendar"></div>
         <div class="agenda-list">
             <h3 class="list-header">Visitas Programadas</h3>
@@ -104,6 +104,10 @@
             document.getElementById('citaFecha').value = fecha;
             document.getElementById('btnEliminar').style.display = id ? 'block' : 'none';
             document.getElementById('modalTitle').innerText = id ? 'Editar Visita' : 'Nueva Visita';
+            if(!id) {
+                document.getElementById('citaTitulo').value = '';
+                document.getElementById('citaHora').value = '';
+            }
             document.getElementById('modalCita').style.display = 'block';
         }
 
@@ -125,17 +129,11 @@
 
             const inicioIso = new Date(`${fecha}T${hora}`).toISOString();
 
-            // AHORA INCLUIMOS EL CAMPO email_cliente QUE FALTABA
+            // Código limpio: Ya no enviamos basura, solo lo necesario
             const datos = { 
                 titulo: titulo, 
                 fecha_inicio: inicioIso, 
-                fecha_fin: inicioIso,
-                email_cliente: 'pastoreo@grupo1.com', // Rellenamos el campo obligatorio
-                email_interno_1: 'jesus.maite@gmail.com',
-                email_interno_2: 'gruposjsfl@gmail.com',
-                email_interno_3: 'gazu1981@gmail.com',
-                notificado_dia_antes: false,
-                notificado_mismo_dia: false
+                fecha_fin: inicioIso
             };
 
             let errorGuardado;
@@ -147,26 +145,21 @@
                 errorGuardado = error;
             }
 
-            if (errorGuardado) {
-                alert("Error: " + errorGuardado.message);
-            } else {
-                cerrarModal();
-                calendar.refetchEvents();
-            }
+            if (errorGuardado) alert("Error: " + errorGuardado.message);
+            else { cerrarModal(); calendar.refetchEvents(); }
         }
 
         async function eliminarCita() {
             if (document.getElementById('adminPass').value !== CLAVE_ADMIN) { alert("Clave incorrecta"); return; }
             if (confirm("¿Borrar visita?")) {
-                await _supabase.from('visitas').delete().eq('id', document.getElementById('citaId').value);
-                cerrarModal(); calendar.refetchEvents();
+                const { error } = await _supabase.from('visitas').delete().eq('id', document.getElementById('citaId').value);
+                if (error) alert("Error: " + error.message);
+                else { cerrarModal(); calendar.refetchEvents(); }
             }
         }
 
         function cerrarModal() {
             document.getElementById('modalCita').style.display = 'none';
-            document.getElementById('citaId').value = '';
-            document.getElementById('citaTitulo').value = '';
             document.getElementById('adminPass').value = '';
         }
     </script>
